@@ -14,6 +14,14 @@
   <link rel="stylesheet" href="/src/css/app.css">
   <link rel="stylesheet" href="/src/css/help.css">
   <link rel="stylesheet" href="/src/css/feed.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3f51b5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="UTEQGram">
+  <link rel="apple-touch-icon" href="/src/images/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/src/images/icons/icon-192x192.png">
 </head>
 
 <body>
@@ -55,6 +63,28 @@
       <main class="mdl-layout__content mat-typography">
         <div id="create-post">
           <form>
+            <!-- Cámara del dispositivo -->
+            <div id="camera-area">
+              <video id="player" autoplay playsinline muted></video>
+              <canvas id="canvas"></canvas>
+              <div id="camera-message"></div>
+              <div class="camera-buttons">
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button"
+                  id="capture-btn">
+                  <i class="material-icons">photo_camera</i> Tomar foto
+                </button>
+                <button class="mdl-button mdl-js-button mdl-button--raised" type="button" id="switch-camera-btn">
+                  <i class="material-icons">flip_camera_android</i>
+                </button>
+                <button class="mdl-button mdl-js-button mdl-button--raised" type="button" id="retake-btn">
+                  <i class="material-icons">replay</i> Otra
+                </button>
+              </div>
+              <div id="pick-image">
+                <h6>¿Sin cámara? Elige una imagen</h6>
+                <input type="file" accept="image/*" capture="environment" id="image-picker">
+              </div>
+            </div>
             <div class="input-section mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
               <input class="mdl-textfield__input" type="text" id="title">
               <label class="mdl-textfield__label" for="title" name="title">Title</label>
@@ -63,6 +93,12 @@
               id="manual-location">
               <input class="mdl-textfield__input" type="text" id="location">
               <label class="mdl-textfield__label" for="location" name="location">Location</label>
+            </div>
+            <div class="input-section">
+              <button class="mdl-button mdl-js-button mdl-button--colored" type="button" id="location-btn">
+                <i class="material-icons">my_location</i> Usar mi ubicación
+              </button>
+              <div class="mdl-spinner mdl-js-spinner is-active" id="location-loader"></div>
             </div>
             <br>
             <div>
@@ -79,6 +115,11 @@
           </form>
         </div>
         <img src="/src/images/main-image.jpg" alt="Explore the City" class="main-image">
+        <div class="text-center" id="install-area">
+          <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" id="install-btn" type="button">
+            <i class="material-icons">install_mobile</i> Instalar app
+          </button>
+        </div>
         <div class="page-content">
           <h5 class="text-center mdl-color-text--primary">Comparte tus Momentos</h5>
           <div id="shared-moments"></div>

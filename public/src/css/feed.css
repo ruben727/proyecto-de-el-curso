@@ -65,3 +65,54 @@ height: 160px;
 height: 200px;
 }
 }
+
+/* ---------- Cámara ---------- */
+#camera-area {
+  margin: 16px auto 0;
+  max-width: 480px;
+  padding: 0 12px;
+}
+
+#player,
+#canvas {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 8px;
+  background: #000;
+  display: none;
+}
+
+#canvas {
+  background: transparent;
+}
+
+.camera-buttons {
+  margin: 8px 0;
+}
+
+.camera-buttons .mdl-button {
+  margin: 4px;
+}
+
+#capture-btn,
+#switch-camera-btn,
+#retake-btn,
+#pick-image,
+#location-loader {
+  display: none;
+}
+
+#camera-message {
+  color: #c62828;
+  font-size: 13px;
+}
+
+#pick-image h6 {
+  margin: 8px 0;
+}
+
+/* ---------- Instalar app ---------- */
+#install-area {
+  display: none;
+  padding: 12px;
+}

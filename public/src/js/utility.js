@@ -48,7 +48,26 @@ function firebaseKeyFromId(id) {
 // Usa PUT con el id del post como llave: si la página y el service worker
 // lo suben al mismo tiempo, se sobrescribe el mismo registro (no se duplica).
 // Devuelve cuántos posts se subieron. Lanza error si alguno falla.
-function sendPendingPosts(logPrefix) {
+// Pide al servidor (función de Vercel /api/send-push) que mande una notificación push
+// a todos los suscriptores. El servidor ignora el aviso si ese post ya se notificó.
+function notifyNewPost(post) {
+    return fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: post.id })
+    })
+        .then(function (res) {
+            if (!res.ok) {
+                console.log('No se pudo enviar el push (' + res.status + ')');
+            }
+        })
+        .catch(function (err) {
+            console.log('No se pudo enviar el push', err);
+        });
+}
+
+// onSent (opcional): se llama con cada post subido correctamente
+function sendPendingPosts(logPrefix, onSent) {
     logPrefix = logPrefix || '';
     return readAllData('sync-posts')
         .then(function (data) {
@@ -75,6 +94,10 @@ function sendPendingPosts(logPrefix) {
                             throw new Error('Firebase respondió ' + res.status);
                         }
                         console.log(logPrefix + 'Post sincronizado con Firebase: ' + dt.title);
+                        notifyNewPost(dt);
+                        if (onSent) {
+                            onSent(dt);
+                        }
                         return deleteItemFromData('sync-posts', dt.id);
                     });
             }))

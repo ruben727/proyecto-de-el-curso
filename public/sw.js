@@ -1,12 +1,15 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
-var CACHE_STATIC_NAME = 'static-v16';
-var CACHE_DYNAMIC_NAME = 'dynamic-v16';
+var CACHE_STATIC_NAME = 'static-v17';
+var CACHE_DYNAMIC_NAME = 'dynamic-v17';
 var STATIC_FILES = [
     '/',
     '/index.html',
     '/offline.html',
+    '/manifest.json',
+    '/src/images/icons/icon-192x192.png',
+    '/src/images/icons/badge-96x96.png',
     '/src/js/app.js',
     '/src/js/feed.js',
     '/src/js/idb.js',
@@ -134,6 +137,79 @@ self.addEventListener('fetch', function (event) {
 
 
 
+// ---------------------------------------------------------------------------
+// Notificaciones
+// ---------------------------------------------------------------------------
+
+// Aviso local cuando un post guardado sin conexión ya se publicó.
+// Usa el mismo "tag" que el push del servidor, así no salen dos notificaciones del mismo post.
+function showPostPublishedNotification(post) {
+    if (!self.registration.showNotification || Notification.permission !== 'granted') {
+        return;
+    }
+    return self.registration.showNotification('¡Tu post se publicó!', {
+        body: post.title + ' — ' + post.location,
+        icon: '/src/images/icons/icon-192x192.png',
+        badge: '/src/images/icons/badge-96x96.png',
+        tag: 'post-' + post.id,
+        data: { url: '/' }
+    });
+}
+
+// Push enviado desde el servidor (/api/send-push)
+self.addEventListener('push', function (event) {
+    console.log('[Service Worker] Push recibido', event);
+    var data = { title: 'UTEQGram', content: '¡Hay novedades!', openUrl: '/' };
+    if (event.data) {
+        try {
+            data = Object.assign(data, event.data.json());
+        } catch (e) {
+            data.content = event.data.text();
+        }
+    }
+    event.waitUntil(
+        self.registration.showNotification(data.title, {
+            body: data.content,
+            icon: '/src/images/icons/icon-192x192.png',
+            badge: '/src/images/icons/badge-96x96.png',
+            vibrate: [100, 50, 200],
+            tag: data.tag,
+            data: { url: data.openUrl }
+        })
+    );
+});
+
+// Al tocar la notificación: enfocar la app si ya está abierta, o abrirla
+self.addEventListener('notificationclick', function (event) {
+    var notification = event.notification;
+    var action = event.action;
+    console.log('[Service Worker] Notificación tocada', action);
+    notification.close();
+
+    if (action === 'cancel') {
+        return;
+    }
+
+    var target = (notification.data && notification.data.url) || '/';
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then(function (clis) {
+                var client = clis.find(function (c) {
+                    return c.visibilityState === 'visible';
+                }) || clis[0];
+                if (client) {
+                    return client.focus();
+                }
+                return self.clients.openWindow(target);
+            })
+    );
+});
+
+self.addEventListener('notificationclose', function (event) {
+    console.log('[Service Worker] Notificación cerrada', event);
+});
+
+
 // Si ya hay una sincronización en curso, se reutiliza la misma promesa
 // (así no se sube el mismo post dos veces y nadie se queda sin esperar el resultado)
 var syncInProgress = null;
@@ -168,7 +244,7 @@ function syncPostsWithRetry(attempt) {
 function doSyncPosts() {
     console.log('[Service Worker] Syncing new Posts');
     // Si falla se lanza el error para que el navegador reintente el sync más tarde
-    return sendPendingPosts('[Service Worker] ')
+    return sendPendingPosts('[Service Worker] ', showPostPublishedNotification)
                 .then(function (count) {
                     if (count === 0) {
                         return;
