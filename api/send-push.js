@@ -6,7 +6,12 @@
 //   VAPID_PRIVATE_KEY  la llave privada (¡nunca subirla al repositorio!)
 //   VAPID_SUBJECT      opcional, p. ej. "mailto:tu-correo@ejemplo.com"
 
-const webpush = require('web-push');
+// web-push v4 es un módulo ESM: se carga con import() dinámico desde CommonJS
+let webpushPromise;
+function loadWebPush() {
+  webpushPromise = webpushPromise || import('web-push').then((m) => m.default || m);
+  return webpushPromise;
+}
 
 const FIREBASE_DB = 'https://proyecto-7c436-default-rtdb.firebaseio.com';
 
@@ -48,6 +53,7 @@ module.exports = async function handler(req, res) {
     body: JSON.stringify({ notified: true })
   });
 
+  const webpush = await loadWebPush();
   const subject = process.env.VAPID_SUBJECT || `https://${req.headers.host}`;
   webpush.setVapidDetails(subject, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
